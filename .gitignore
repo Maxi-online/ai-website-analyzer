@@ -1,0 +1,6 @@
+.env
+.codegpt
+.vscode
+.db
+__pycache__/
+requirements.txt
