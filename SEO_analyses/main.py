@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from .wsparser import WordstatParser
+from .head_parser import fetch_and_parse_head
 
 # Конфигурация для доступа к Wordstat
 YANDEX_URL = os.getenv("YANDEX_URL", "https://api-sandbox.direct.yandex.ru/v4/json/")
@@ -19,8 +20,13 @@ parser = WordstatParser(YANDEX_URL, YANDEX_TOKEN, YANDEX_USERNAME)
 
 app = FastAPI(title="SEO Analyses Service")
 
+# Модель запроса для Wordstat
 class WordstatRequest(BaseModel):
     keywords: List[str]
+
+# Модель запроса для парсинга head
+class HeadRequest(BaseModel):
+    url: str
 
 @app.post("/wordstat")
 async def get_wordstat(request: WordstatRequest):
@@ -29,8 +35,6 @@ async def get_wordstat(request: WordstatRequest):
     запрашивает статистику в Wordstat (регион Москва = 213),
     возвращает найденные фразы и их частотность.
     """
-
-    # Используем run_in_executor, чтобы не блокировать event loop
     loop = asyncio.get_running_loop()
 
     def process_wordstat(keywords: list[str]) -> dict:
@@ -38,7 +42,6 @@ async def get_wordstat(request: WordstatRequest):
         response = parser.createReport(keywords, [213])
         if "data" not in response:
             raise Exception("Не удалось создать отчет: " + str(response))
-
         report_id = response["data"]
 
         # Шаг 2: Ждём, пока отчёт будет готов (максимум 30 итераций)
@@ -47,16 +50,13 @@ async def get_wordstat(request: WordstatRequest):
             report_list = parser.getReportList()
             if "data" not in report_list or not report_list["data"]:
                 raise Exception("Не удалось получить список отчетов: " + str(report_list))
-
-            # Предполагаем, что только что созданный отчёт - последний в списке
+            # Предполагаем, что только что созданный отчёт — последний в списке
             last_report = report_list["data"][-1]
             status = last_report.get("StatusReport")
-
             if status == "Done":
                 break
             elif status == "Failed":
                 raise Exception("Отчет не может быть сформирован (Failed).")
-
             time.sleep(2)
             attempts += 1
             if attempts > 30:
@@ -70,8 +70,7 @@ async def get_wordstat(request: WordstatRequest):
         # Шаг 4: Формируем итоговый список (левая колонка SearchedWith)
         result_keywords = []
         for entry in report_data["data"]:
-            searched_with = entry.get("SearchedWith", [])
-            for item in searched_with:
+            for item in entry.get("SearchedWith", []):
                 phrase = item.get("Phrase")
                 shows = item.get("Shows")
                 result_keywords.append({"phrase": phrase, "shows": shows})
@@ -82,13 +81,22 @@ async def get_wordstat(request: WordstatRequest):
         return {"keywords": result_keywords}
 
     try:
-        # Запускаем синхронную функцию в пуле потоков
         result = await loop.run_in_executor(None, process_wordstat, request.keywords)
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+@app.post("/parse_head")
+def parse_head_endpoint(request: HeadRequest):
+    """
+    Принимает URL, загружает страницу и возвращает содержимое тега <head>.
+    """
+    try:
+        head_content = fetch_and_parse_head(request.url)
+        return {"head": head_content}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
 if __name__ == "__main__":
     import uvicorn
-    # Запускаем сервис на порту 8001 (или другом)
     uvicorn.run("SEO_analyses.main:app", host="0.0.0.0", port=8001, reload=True)
