@@ -1,12 +1,17 @@
+# SPDX-License-Identifier: MIT
+
+# Copyright (c) 2025 Maxim Strekolovskiy
+
 # SEO_analyses/wsparser.py
+
 import json
-import urllib.request
 import urllib.error
+import urllib.request
+
 
 class WordstatParser:
     """
-    Класс для работы с Wordstat через API Яндекс.Директа.
-    Предполагается, что у вас уже есть тестовый/полный доступ и отладочный токен.
+    Helper for Wordstat via the legacy Yandex Direct API.
     """
 
     def __init__(self, url: str, token: str, username: str):
@@ -16,20 +21,16 @@ class WordstatParser:
 
     def createReport(self, phrases, geo=None):
         """
-        Создаёт новый отчёт Wordstat на сервере.
-        phrases: список ключевых фраз (не более 10 за один раз)
-        geo: список ID регионов (например, [213] для Москвы)
+        Create a new Wordstat report on the server.
+        phrases: list of key phrases (Yandex API limits apply)
+        geo: list of region IDs (e.g. [213] for Moscow)
         """
         if geo is None:
             geo = []
-
         data = {
             "method": "CreateNewWordstatReport",
             "token": self.token,
-            "param": {
-                "Phrases": phrases,
-                "GeoID": geo
-            }
+            "param": {"Phrases": phrases, "GeoID": geo},
         }
         data_encoded = json.dumps(data, ensure_ascii=False).encode("utf-8")
         request = urllib.request.urlopen(self.url, data_encoded)
@@ -38,12 +39,9 @@ class WordstatParser:
 
     def getReportList(self):
         """
-        Получает список всех доступных отчётов Wordstat на сервере.
+        Return a list of all available Wordstat reports on the server.
         """
-        data = {
-            "method": "GetWordstatReportList",
-            "token": self.token
-        }
+        data = {"method": "GetWordstatReportList", "token": self.token}
         data_encoded = json.dumps(data, ensure_ascii=False).encode("utf-8")
         request = urllib.request.urlopen(self.url, data_encoded)
         response = json.loads(request.read().decode("utf-8"))
@@ -51,13 +49,9 @@ class WordstatParser:
 
     def readReport(self, report_id: int):
         """
-        Считывает готовый отчёт Wordstat по его ID.
+        Read a finished Wordstat report by its ID.
         """
-        data = {
-            "method": "GetWordstatReport",
-            "token": self.token,
-            "param": report_id
-        }
+        data = {"method": "GetWordstatReport", "token": self.token, "param": report_id}
         data_encoded = json.dumps(data, ensure_ascii=False).encode("utf-8")
         request = urllib.request.urlopen(self.url, data_encoded)
         response = json.loads(request.read().decode("utf-8"))
@@ -65,12 +59,12 @@ class WordstatParser:
 
     def deleteReport(self, report_id: int):
         """
-        Удаляет отчёт Wordstat с сервера по его ID.
+        Delete a Wordstat report by its ID.
         """
         data = {
             "method": "DeleteWordstatReport",
             "token": self.token,
-            "param": report_id
+            "param": report_id,
         }
         data_encoded = json.dumps(data, ensure_ascii=False).encode("utf-8")
         request = urllib.request.urlopen(self.url, data_encoded)
@@ -79,13 +73,12 @@ class WordstatParser:
 
     def getClientUnits(self):
         """
-        Пример метода, который возвращает оставшиеся баллы (единицы) API Директа.
-        (Если нужно, можно вызвать в main.py для отладки)
+        Example method: return remaining API units for the configured client.
         """
         data = {
             "method": "GetClientsUnits",
             "token": self.token,
-            "param": [self.username]
+            "param": [self.username],
         }
         data_encoded = json.dumps(data, ensure_ascii=False).encode("utf-8")
         request = urllib.request.urlopen(self.url, data_encoded)

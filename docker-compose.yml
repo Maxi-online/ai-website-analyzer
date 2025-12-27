@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # SEO Analysis Service
+  seo-service:
+    build:
+      context: .
+      dockerfile: SEO_analyses/Dockerfile
+    container_name: analytics-seo
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - OPENAI_VERBOSITY=${OPENAI_VERBOSITY:-medium}
+      - OPENAI_REASONING_EFFORT=${OPENAI_REASONING_EFFORT:-medium}
+      - OPENAI_ALLOWED_TOOLS=${OPENAI_ALLOWED_TOOLS:-web,python}
+      - OPENAI_GRAMMAR_ENABLED=${OPENAI_GRAMMAR_ENABLED:-false}
+      - PROXY_ENABLED=${PROXY_ENABLED:-true}
+      - PROXY_HOST=${PROXY_HOST:-}
+      - PROXY_PORT=${PROXY_PORT:-63230}
+      - PROXY_USERNAME=${PROXY_USERNAME:-}
+      - PROXY_PASSWORD=${PROXY_PASSWORD:-}
+      - PROXY_TYPE=${PROXY_TYPE:-http}
+      - YANDEX_WORDSTAT_TOKEN=${YANDEX_WORDSTAT_TOKEN}
+      - YANDEX_CLOUD_API_KEY=${YANDEX_CLOUD_API_KEY}
+      - YANDEX_CLIENT_ID=${YANDEX_CLIENT_ID}
+      - YANDEX_CLIENT_SECRET=${YANDEX_CLIENT_SECRET}
+      - YANDEX_TOKEN=${YANDEX_TOKEN}
+      - YANDEX_USERNAME=${YANDEX_USERNAME}
+      - SEO_SERVICE_PORT=8001
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-600}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+    networks:
+      - analytics-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Text Analysis Service
+  text-service:
+    build:
+      context: .
+      dockerfile: Text_analyses/Dockerfile
+    container_name: analytics-text
+    ports:
+      - "8002:8002"
+    environment:
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - OPENAI_VERBOSITY=${OPENAI_VERBOSITY:-medium}
+      - OPENAI_REASONING_EFFORT=${OPENAI_REASONING_EFFORT:-medium}
+      - OPENAI_ALLOWED_TOOLS=${OPENAI_ALLOWED_TOOLS:-web,python}
+      - OPENAI_GRAMMAR_ENABLED=${OPENAI_GRAMMAR_ENABLED:-false}
+      - PROXY_ENABLED=${PROXY_ENABLED:-true}
+      - PROXY_HOST=${PROXY_HOST:-}
+      - PROXY_PORT=${PROXY_PORT:-63230}
+      - PROXY_USERNAME=${PROXY_USERNAME:-}
+      - PROXY_PASSWORD=${PROXY_PASSWORD:-}
+      - PROXY_TYPE=${PROXY_TYPE:-http}
+      - TEXT_SERVICE_PORT=8002
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-600}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+    networks:
+      - analytics-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Convenience Analysis Service
+  convenience-service:
+    build:
+      context: .
+      dockerfile: Convenience_analyses/Dockerfile
+    container_name: analytics-convenience
+    ports:
+      - "8003:8003"
+    environment:
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - OPENAI_VERBOSITY=${OPENAI_VERBOSITY:-medium}
+      - OPENAI_REASONING_EFFORT=${OPENAI_REASONING_EFFORT:-medium}
+      - OPENAI_ALLOWED_TOOLS=${OPENAI_ALLOWED_TOOLS:-web,python}
+      - OPENAI_GRAMMAR_ENABLED=${OPENAI_GRAMMAR_ENABLED:-false}
+      - PROXY_ENABLED=${PROXY_ENABLED:-true}
+      - PROXY_HOST=${PROXY_HOST:-}
+      - PROXY_PORT=${PROXY_PORT:-63230}
+      - PROXY_USERNAME=${PROXY_USERNAME:-}
+      - PROXY_PASSWORD=${PROXY_PASSWORD:-}
+      - PROXY_TYPE=${PROXY_TYPE:-http}
+      - GTMETRIX_API_KEY=${GTMETRIX_API_KEY}
+      - BRIGHTDATA_API_TOKEN=${BRIGHTDATA_API_TOKEN}
+      - BRIGHTDATA_MCP_BASE_URL=${BRIGHTDATA_MCP_BASE_URL:-https://mcp.brightdata.com/mcp}
+      - BRIGHTDATA_MCP_TIMEOUT=${BRIGHTDATA_MCP_TIMEOUT:-60}
+      - CONVENIENCE_SERVICE_PORT=8003
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-900}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+      - SCREENSHOT_WIDTH=${SCREENSHOT_WIDTH:-1920}
+      - SCREENSHOT_HEIGHT=${SCREENSHOT_HEIGHT:-1080}
+    networks:
+      - analytics-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    shm_size: '2gb'  # For Selenium/Chrome
+
+  # Senior Analyser Service
+  senior-service:
+    build:
+      context: .
+      dockerfile: Senior_analyser/Dockerfile
+    container_name: analytics-senior
+    ports:
+      - "8004:8004"
+    environment:
+      - DOCKER_ENV=true
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - OPENAI_VERBOSITY=${OPENAI_VERBOSITY:-medium}
+      - OPENAI_REASONING_EFFORT=${OPENAI_REASONING_EFFORT:-medium}
+      - OPENAI_ALLOWED_TOOLS=${OPENAI_ALLOWED_TOOLS:-web,python}
+      - OPENAI_GRAMMAR_ENABLED=${OPENAI_GRAMMAR_ENABLED:-false}
+      - PROXY_ENABLED=${PROXY_ENABLED:-true}
+      - PROXY_HOST=${PROXY_HOST:-}
+      - PROXY_PORT=${PROXY_PORT:-63230}
+      - PROXY_USERNAME=${PROXY_USERNAME:-}
+      - PROXY_PASSWORD=${PROXY_PASSWORD:-}
+      - PROXY_TYPE=${PROXY_TYPE:-http}
+      - SEO_SERVICE_PORT=8001
+      - TEXT_SERVICE_PORT=8002
+      - CONVENIENCE_SERVICE_PORT=8003
+      - SENIOR_SERVICE_PORT=8004
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-600}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+    networks:
+      - analytics-network
+    restart: unless-stopped
+    depends_on:
+      - seo-service
+      - text-service
+      - convenience-service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  analytics-network:
+    driver: bridge

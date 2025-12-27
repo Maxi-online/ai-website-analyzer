@@ -1,0 +1,28 @@
+# Convenience Analysis Microservice Dependencies
+
+# Web Framework
+fastapi==0.118.0
+uvicorn==0.37.0
+pydantic==2.11.9
+
+# HTTP Clients
+requests==2.32.5
+httpx==0.28.1
+aiohttp==3.10.0
+
+# Browser Automation
+selenium==4.35.0
+webdriver-manager==4.0.2
+
+# OpenAI GPT-5
+openai==1.109.1
+
+# Image Processing
+pillow==11.3.0
+
+# Performance Testing
+lighthouse==1.0.0
+
+# Data Processing
+python-multipart==0.0.20
+beautifulsoup4==4.12.3

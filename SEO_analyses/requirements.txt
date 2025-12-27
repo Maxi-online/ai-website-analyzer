@@ -1,0 +1,23 @@
+# SEO Analysis Microservice Dependencies
+
+# Web Framework
+fastapi==0.118.0
+uvicorn==0.37.0
+pydantic==2.11.9
+
+# HTTP Clients
+requests==2.32.5
+httpx==0.28.1
+aiohttp==3.12.15
+
+# HTML Parsing
+beautifulsoup4==4.14.2
+
+# OpenAI GPT-5
+openai==1.109.1
+
+# Yandex API
+YandexWordStatAPI==1.1
+
+# Data Processing
+python-multipart==0.0.20

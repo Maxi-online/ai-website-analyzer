@@ -1,83 +1,92 @@
+# SPDX-License-Identifier: MIT
+
+# Copyright (c) 2025 Maxim Strekolovskiy
+
 # SEO_analyses/main.py
+
+import asyncio
 import os
 import time
-import asyncio
 from typing import List
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from .wsparser import WordstatParser
 from .head_parser import fetch_and_parse_head
+from .wsparser import WordstatParser
 
-# Конфигурация для доступа к Wordstat
+# Wordstat access configuration
+
 YANDEX_URL = os.getenv("YANDEX_URL", "https://api-sandbox.direct.yandex.ru/v4/json/")
-YANDEX_TOKEN = os.getenv("YANDEX_TOKEN", "ВАШ_ТОКЕН")
-YANDEX_USERNAME = os.getenv("YANDEX_USERNAME", "ВАШ_ЛОГИН")
 
-# Инициализируем парсер Wordstat
+YANDEX_TOKEN = os.getenv("YANDEX_TOKEN", "")
+
+YANDEX_USERNAME = os.getenv("YANDEX_USERNAME", "")
+
+# Initialize Wordstat parser
+
 parser = WordstatParser(YANDEX_URL, YANDEX_TOKEN, YANDEX_USERNAME)
 
 app = FastAPI(title="SEO Analyses Service")
 
-# Модель запроса для Wordstat
+# Request model for Wordstat
+
+
 class WordstatRequest(BaseModel):
     keywords: List[str]
 
-# Модель запроса для парсинга head
+
+# Request model for <head> parsing
+
+
 class HeadRequest(BaseModel):
     url: str
+
 
 @app.post("/wordstat")
 async def get_wordstat(request: WordstatRequest):
     """
-    Принимает список ключевых слов,
-    запрашивает статистику в Wordstat (регион Москва = 213),
-    возвращает найденные фразы и их частотность.
+    Accepts a list of keywords, requests Wordstat statistics (region Moscow = 213),
+    and returns phrases with their frequency.
     """
     loop = asyncio.get_running_loop()
 
     def process_wordstat(keywords: list[str]) -> dict:
-        # Шаг 1: Создаём отчёт для заданных ключевых слов и региона Москва (ID = 213)
+        # Step 1: Create a report for the provided keywords and region Moscow (ID = 213)
         response = parser.createReport(keywords, [213])
         if "data" not in response:
-            raise Exception("Не удалось создать отчет: " + str(response))
+            raise Exception("Failed to create report: " + str(response))
         report_id = response["data"]
-
-        # Шаг 2: Ждём, пока отчёт будет готов (максимум 30 итераций)
+        # Step 2: Wait for the report to be ready (max 30 iterations)
         attempts = 0
         while True:
             report_list = parser.getReportList()
             if "data" not in report_list or not report_list["data"]:
-                raise Exception("Не удалось получить список отчетов: " + str(report_list))
-            # Предполагаем, что только что созданный отчёт — последний в списке
+                raise Exception("Failed to get report list: " + str(report_list))
+            # Assume the newly created report is the last item in the list
             last_report = report_list["data"][-1]
             status = last_report.get("StatusReport")
             if status == "Done":
                 break
             elif status == "Failed":
-                raise Exception("Отчет не может быть сформирован (Failed).")
+                raise Exception("Report generation failed (Failed).")
             time.sleep(2)
             attempts += 1
             if attempts > 30:
-                raise Exception("Слишком долго ждем формирования отчета.")
-
-        # Шаг 3: Читаем отчёт
+                raise Exception("Timed out waiting for report generation.")
+        # Step 3: Read the report
         report_data = parser.readReport(report_id)
         if "data" not in report_data:
-            raise Exception("Не удалось прочитать отчет: " + str(report_data))
-
-        # Шаг 4: Формируем итоговый список (левая колонка SearchedWith)
+            raise Exception("Failed to read report: " + str(report_data))
+        # Step 4: Build the result list (SearchedWith column)
         result_keywords = []
         for entry in report_data["data"]:
             for item in entry.get("SearchedWith", []):
                 phrase = item.get("Phrase")
                 shows = item.get("Shows")
                 result_keywords.append({"phrase": phrase, "shows": shows})
-
-        # Шаг 5: Удаляем отчёт (чтобы не превысить лимит в 5 отчётов)
+        # Step 5: Delete the report (Direct API limits stored reports)
         parser.deleteReport(report_id)
-
         return {"keywords": result_keywords}
 
     try:
@@ -86,10 +95,11 @@ async def get_wordstat(request: WordstatRequest):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+
 @app.post("/parse_head")
 def parse_head_endpoint(request: HeadRequest):
     """
-    Принимает URL, загружает страницу и возвращает содержимое тега <head>.
+    Accepts a URL, loads the page, and returns the contents of the <head> tag.
     """
     try:
         head_content = fetch_and_parse_head(request.url)
@@ -97,6 +107,9 @@ def parse_head_endpoint(request: HeadRequest):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+
 if __name__ == "__main__":
+
     import uvicorn
+
     uvicorn.run("SEO_analyses.main:app", host="0.0.0.0", port=8001, reload=True)
