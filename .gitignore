@@ -1,6 +1,83 @@
-.env
-.codegpt
-.vscode
-.db
+# Python
 __pycache__/
-requirements.txt
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.virtualenvs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary JSON files (test results)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test files (if not needed in the repository)
+test_*.py
+*_test.py
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+temp_results/
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Shared folder (removed from the project)
+shared/
+
+# Old root files (removed from the project)
+proxy_test.py
+test_integration.py
+test_yandex_integration.py
+start_services.py
+gpt5_agents.py

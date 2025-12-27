@@ -1,0 +1,11 @@
+# Desktop Application Dependencies
+
+# HTTP Client
+requests==2.32.5
+httpx==0.28.1
+
+# GUI (if used)
+# tkinter is included with Python
+
+# Data Processing
+pydantic==2.11.9

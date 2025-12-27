@@ -1,0 +1,27 @@
+# Text Analysis Microservice Dependencies
+
+# Web Framework
+fastapi==0.118.0
+uvicorn==0.37.0
+pydantic==2.11.9
+
+# HTTP Clients
+requests==2.32.5
+httpx==0.28.1
+
+# HTML Parsing
+beautifulsoup4==4.14.2
+
+# OpenAI GPT-5
+openai==1.109.1
+
+# Text Analysis
+nltk==3.9.1
+textstat==0.7.10
+pymorphy2==0.9.1
+razdel==0.5.0
+
+# Data Processing
+python-multipart==0.0.20
+numpy==2.3.3
+scikit-learn==1.7.2
