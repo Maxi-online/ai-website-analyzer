@@ -7,7 +7,7 @@ pydantic==2.11.9
 
 # HTTP Clients
 httpx==0.28.1
-aiohttp==3.12.15
+aiohttp==3.13.3
 
 # OpenAI GPT-5
 openai==1.109.1
