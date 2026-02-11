@@ -18,7 +18,7 @@ webdriver-manager==4.0.2
 openai==1.109.1
 
 # Image Processing
-pillow==11.3.0
+pillow==12.1.1
 
 # Performance Testing
 lighthouse==1.0.0
