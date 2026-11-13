@@ -1,215 +1,113 @@
-# Analytics Microservices Platform
+# AI Website Analyzer
 
-Comprehensive website analytics platform built on a microservices architecture and GPT-5.
+**A service-oriented website-auditing application that combines extracted page signals with LLM-generated analysis and site comparisons.**
 
-## Architecture
+The project separates SEO checks, text analysis, usability heuristics and report
+synthesis into FastAPI services. A desktop client submits URLs and displays the
+aggregated result. The engineering focus is the collection-to-report workflow
+and the boundaries between deterministic checks and model interpretation.
 
-The project consists of **5 independent components**:
+## Components
 
+| Component | Responsibility | Source |
+|---|---|---|
+| SEO analyzer | HTML metadata, headings and URL signals; optional Yandex integration | [SEO_analyses](SEO_analyses) |
+| Text analyzer | Text statistics, readability and model-assisted content review | [Text_analyses](Text_analyses) |
+| Usability analyzer | Accessibility/responsiveness heuristics and optional screenshots | [Convenience_analyses](Convenience_analyses) |
+| Aggregator | Coordinate analyzers, compare sites and synthesize recommendations | [Senior_analyser](Senior_analyser) |
+| Desktop client | URL input and report display | [Desktop_app](Desktop_app) |
+
+```mermaid
+flowchart LR
+    A[URLs / desktop client] --> B[Report aggregator]
+    B --> C[SEO signals]
+    B --> D[Text signals]
+    B --> E[Usability signals / optional screenshots]
+    C --> F[LLM-assisted synthesis]
+    D --> F
+    E --> F
+    F --> G[Single-site report / comparison]
 ```
-analytics/
-├── SEO_analyses/          # SEO Analysis Microservice
-├── Text_analyses/         # Text Analysis Microservice
-├── Convenience_analyses/  # UX/UI & Performance Microservice
-├── Senior_analyser/       # Aggregation & Comparison Microservice
-└── Desktop_app/           # GUI Application
-```
 
-## Microservices
+The model provides interpretation of collected signals. Its recommendations are
+not measured search-ranking outcomes, conversion improvements or an accessibility
+compliance certification.
 
-### 1. SEO_analyses (Port: 8001)
-**Purpose:** SEO analysis for websites
-- Meta tags, headings, URL structure analysis
-- Optional integration with Yandex Wordstat (legacy Direct API)
-- GPT-5 for synthesized recommendations
+## Run with Docker
 
-**Tech:** FastAPI, BeautifulSoup, OpenAI GPT-5
+Use Docker and Docker Compose. Configure an LLM provider credential for the
+model-assisted stages; optional screenshot, proxy and Yandex integrations have
+their own configuration.
 
-### 2. Text_analyses (Port: 8002)
-**Purpose:** Text/content analysis
-- Readability and structure signals
-- Content statistics
-- GPT-5 for quality assessment
-
-**Tech:** FastAPI, TextStat, OpenAI GPT-5
-
-### 3. Convenience_analyses (Port: 8003)
-**Purpose:** UX/UI and usability analysis
-- Optional screenshots via ScreenshotOne (if configured)
-- Basic accessibility and responsive heuristics (best-effort)
-- GPT-5 for UX report generation
-
-**Tech:** FastAPI, BeautifulSoup, ScreenshotOne (optional), OpenAI GPT-5
-
-### 4. Senior_analyser (Port: 8004)
-**Purpose:** Aggregation and comparison
-- Collects results from all microservices
-- Compares two websites
-- Produces a final report
-- GPT-5 for expert-level synthesis
-
-**Tech:** FastAPI, aiohttp/httpx, OpenAI GPT-5
-
-### 5. Desktop_app
-**Purpose:** End-user GUI
-- Enter site URLs
-- Start analysis via `Senior_analyser`
-- View results
-
-**Tech:** Python, tkinter, requests
-
-## Quick start
-
-### Requirements
-- Docker & Docker Compose
-- OpenAI API key (for GPT-5)
-
-### 1) Environment variables
-
-Copy `env.example` to `.env` and fill in the required values:
 ```bash
+git clone https://github.com/Maxi-online/ai-website-analyzer.git
+cd ai-website-analyzer
 cp env.example .env
 ```
 
-Required variables:
-```env
-OPENAI_API_KEY=sk-example-your-openai-key
-```
-
-### 2) Run via Docker
+Edit the local `.env` before starting. `OPENAI_API_KEY` is the required provider
+credential. `OPENAI_MODEL`, `OPENAI_VERBOSITY` and `OPENAI_REASONING_EFFORT`
+configure model requests. Proxy and third-party integration settings are optional;
+see [env.example](env.example) and each service's `settings.py`.
 
 ```bash
-# Rebuild and start all containers
-docker-compose up --build -d
-
-# Status
-docker-compose ps
-
-# Logs
-docker-compose logs -f
+docker compose up --build -d
+docker compose ps
+curl http://localhost:8004/health
+curl http://localhost:8004/service_status
 ```
 
-### 3) Stop services
+Use `docker compose logs -f` for service output and `docker compose down` to stop
+the deployment. Runtime provider calls can incur provider charges; the examples
+above check deployment status rather than running a site analysis.
 
-```bash
-docker-compose down
-```
+## API entry points
 
-## API testing
+| Service | Port | Endpoint |
+|---|---:|---|
+| SEO | 8001 | `POST /seo_analysis` |
+| Text | 8002 | `POST /text_analysis` |
+| Usability | 8003 | `POST /convenience_analysis` |
+| Aggregator | 8004 | `POST /analyze_single_site` |
+| Aggregator | 8004 | `POST /compare_sites` |
+| Aggregator | 8004 | `POST /generate_recommendations` |
 
-### SEO Analysis
-```bash
-curl -X POST http://localhost:8001/seo_analysis \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
-```
+The comparison request uses `site1_url` and `site2_url`. A single-site request
+uses `url`; consult the generated FastAPI documentation and
+[request models](Senior_analyser/main.py) for the current contract.
+The comparison endpoint returns a text report rather than a universal structured
+scoring schema.
 
-### Text Analysis
-```bash
-curl -X POST http://localhost:8002/text_analysis \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
-```
+## Engineering choices
 
-### Convenience Analysis
-```bash
-curl -X POST http://localhost:8003/convenience_analysis \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
-```
+- Separate analyzer responsibilities and HTTP contracts instead of one monolithic prompt.
+- Service-local configuration and dependency files.
+- Async HTTP-based orchestration and a separate LLM client layer.
+- Docker definitions for service deployment, with an optional desktop entry point.
+- Optional integrations remain distinguishable from the core HTML/text workflow.
 
-### Senior Comparison
-```bash
-curl -X POST http://localhost:8004/compare_sites \
-  -H "Content-Type: application/json" \
-  -d '{"site1_url": "https://site1.com", "site2_url": "https://site2.com"}'
-```
+The `gpt5_agent.py` filename records the current integration's history; model
+selection is configurable. No claim of a newly trained model is made.
 
-## Development
+## Validation and limitations
 
-### Microservice layout
-Each microservice is self-contained:
-```
-SEO_analyses/
-├── settings.py           # Service-local settings
-├── requirements.txt      # Service dependencies
-├── Dockerfile            # Docker image definition
-├── main.py               # FastAPI application
-├── gpt5_agent.py         # GPT-5 integration
-└── [specific modules]    # Service-specific logic
-```
+The repository contains the application and deployment definitions. It does not
+establish a reproducible accuracy benchmark for SEO/UX judgements, production
+availability or improved business outcomes. Dynamic pages, blocked fetches,
+missing screenshots and partial service failures can limit the available evidence.
 
-### Adding a new microservice
-1. Create a folder for the service
-2. Add `settings.py`, `requirements.txt`, `Dockerfile`
-3. Implement the FastAPI app in `main.py`
-4. Add the service to `docker-compose.yml`
+Useful evaluation fixtures would retain fetched HTML/screenshots, expected
+deterministic findings, report references, failure responses and cost/latency.
+Compare model conclusions with independent review rather than treating generated
+scores as ground truth.
 
-## Documentation
+## Additional documentation
 
-- **Yandex API**: `YANDEX_API_README.md`
+[Yandex integration](YANDEX_API_README.md) ·
+[Docker configuration](docker-compose.yml) ·
+[Aggregator model client](Senior_analyser/gpt5_agent.py)
 
-## Configuration
+## Author and license
 
-### OpenAI GPT-5
-```env
-OPENAI_MODEL=gpt-5-nano
-OPENAI_VERBOSITY=medium
-OPENAI_REASONING_EFFORT=medium
-```
-
-### Proxy
-```env
-PROXY_ENABLED=false
-PROXY_HOST=your_proxy_host
-PROXY_PORT=your_proxy_port
-PROXY_USERNAME=your_username
-PROXY_PASSWORD=your_password
-```
-
-### Bright Data MCP
-```env
-BRIGHTDATA_API_TOKEN=your_token_here
-```
-
-## Architectural decisions
-
-### Microservices
-- Independent services
-- Separate `settings.py` and `requirements.txt`
-- HTTP-based communication
-- Docker-based horizontal scaling
-
-### GPT-5 Integration
-- Responses API (instead of legacy Chat Completions)
-- Async calls via `httpx`
-- Proxy support for outbound requests
-
-### Temporary files
-- Ignored via `.gitignore`
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m "Add AmazingFeature"`)
-4. Push the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Author
-
-Maxim Strekolovskiy
-
-## License
-
-MIT License - see [LICENSE](LICENSE)
-
-## 👥 Authors
-
-Maxim Strekolovskiy
-
-## 🙏 Acknowledgments
-
-- OpenAI GPT-5 for intelligent analysis
-- Bright Data MCP for screenshots/web automation (optional)
-- Yandex APIs for SEO-related data (optional)
+Maxim Strekolovskiy. [MIT License](LICENSE). External services and dependencies
+retain their respective terms.
