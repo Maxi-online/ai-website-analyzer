@@ -78,6 +78,31 @@ uses `url`; consult the generated FastAPI documentation and
 The comparison endpoint returns a text report rather than a universal structured
 scoring schema.
 
+### Request examples
+
+With the services running and the provider configured:
+
+```bash
+curl -X POST http://localhost:8001/seo_analysis -H "Content-Type: application/json" -d '{"url":"https://www.python.org"}'
+curl -X POST http://localhost:8002/text_analysis -H "Content-Type: application/json" -d '{"url":"https://www.python.org"}'
+curl -X POST http://localhost:8003/convenience_analysis -H "Content-Type: application/json" -d '{"url":"https://www.python.org"}'
+curl -X POST http://localhost:8004/compare_sites -H "Content-Type: application/json" -d '{"site1_url":"https://www.python.org","site2_url":"https://www.rust-lang.org"}'
+```
+
+These requests run analyses and can call the configured external providers.
+
+### Configuration map
+
+| Settings | Role |
+|---|---|
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | Provider access and model selection |
+| `OPENAI_VERBOSITY`, `OPENAI_REASONING_EFFORT` | Model-request options |
+| `PROXY_ENABLED`, `PROXY_HOST`, `PROXY_PORT`, `PROXY_USERNAME`, `PROXY_PASSWORD` | Optional outbound proxy |
+| Screenshot/Yandex integration settings | Optional evidence sources; see service settings and Yandex documentation |
+
+Local credentials belong in the configured environment. The README intentionally
+does not supply dummy keys that could be mistaken for working configuration.
+
 ## Engineering choices
 
 - Separate analyzer responsibilities and HTTP contracts instead of one monolithic prompt.
@@ -88,6 +113,14 @@ scoring schema.
 
 The `gpt5_agent.py` filename records the current integration's history; model
 selection is configurable. No claim of a newly trained model is made.
+
+## Extending an analyzer
+
+Each analyzer has its own `main.py`, `settings.py`, `requirements.txt`,
+`Dockerfile` and model-client module. To add an analysis stage, define its request
+and response contract, add it to the Compose deployment, and wire it into the
+aggregator. Keep collected evidence separate from generated interpretation so
+individual findings can be inspected and tested.
 
 ## Validation and limitations
 
