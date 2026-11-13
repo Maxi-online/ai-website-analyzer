@@ -20,4 +20,4 @@ openai==1.109.1
 YandexWordStatAPI==1.1
 
 # Data Processing
-python-multipart==0.0.20
+python-multipart==0.0.22
