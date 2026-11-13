@@ -81,3 +81,20 @@ test_integration.py
 test_yandex_integration.py
 start_services.py
 gpt5_agents.py
+
+# Private runtime files
+.env
+.env.*
+!.env.example
+!.env.template
+settings_secret.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.local.json
+*.local.yaml
+*.log
+*.sqlite
+*.sqlite3
+*.dump
