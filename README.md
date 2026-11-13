@@ -145,10 +145,10 @@ scores as ground truth.
 Maxim Strekolovskiy. [MIT License](LICENSE). External services and dependencies
 retain their respective terms.
 
-## Конфигурация, приватность и воспроизведение
+## Configuration, privacy and reproducibility
 
-Провайдеры анализа и парсинга настраиваются локально. Проверяйте `settings.py` и примеры запуска выше перед обращением к платным API. Не включайте в отчёты cookie, заголовки авторизации, закрытые URL и содержимое личных кабинетов.
+Configure analysis and parsing providers locally. Review `settings.py` and the usage examples above before invoking paid APIs. Reports must exclude cookies, authorization headers, private URLs and authenticated account content.
 
-Секреты храните в игнорируемых локальных файлах или переменных окружения. Безопасные примеры содержат только структуру настройки. Не передавайте секреты в командной строке и не добавляйте заполненные `.env`, приватные ключи, базы данных и логи в коммиты.
+Keep credentials in ignored local files or environment variables. Configuration examples contain structure only. Avoid passing secrets on the command line or committing populated `.env` files, private keys, databases or logs.
 
-Workflow [Secret scan](.github/workflows/secret-scan.yml) проверяет текущие файлы и входящие коммиты Gitleaks 8.30.1 с редактированием значений в выводе. Это проверка на известные шаблоны, а не подтверждение отсутствия всех возможных утечек. Удаление значения из HEAD не очищает старую историю; порядок действий описан в [SECURITY.md](SECURITY.md).
+The [Secret scan](.github/workflows/secret-scan.yml) workflow scans current files and incoming commits with Gitleaks 8.30.1 and redacts matched values. Pattern scanning cannot prove that every possible disclosure is absent. Removing a value from HEAD does not clean older history; see [SECURITY.md](SECURITY.md) for incident handling.
